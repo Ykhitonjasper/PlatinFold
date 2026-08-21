@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Xcode
+xcuserdata/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Build
+.build/
+build/
+DerivedData/
+DerivedData-device/
+DerivedData-smoke/
+
+# Secrets — this app's signing only, never commit
+*.p8
+*.p12
+*.mobileprovision
+AuthKey_*.p8
+
+# Local artifacts
+OUTPUTS/
+*.log
+LegalSite/

@@ -1,0 +1,122 @@
+name: PlatinFold
+options:
+  bundleIdPrefix: com.indens
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+packages:
+  Alamofire:
+    url: https://github.com/Alamofire/Alamofire.git
+    from: 5.9.1
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk.git
+    from: 10.22.0
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    GENERATE_INFOPLIST_FILE: YES
+    INFOPLIST_FILE: PlatinFold/Info.plist
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    PRODUCT_BUNDLE_IDENTIFIER: com.indens.platinfold
+    PRODUCT_NAME: PlatinFold
+    DEVELOPMENT_TEAM: "S32MDUD8NR"
+    CODE_SIGN_STYLE: Automatic
+    SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+    SUPPORTS_MACCATALYST: NO
+targets:
+  PlatinFold:
+    type: application
+    platform: iOS
+    sources:
+      - path: PlatinFold
+        excludes:
+          - Info.plist
+          - PrivacyInfo.xcprivacy
+    resources:
+      - path: PlatinFold/Assets.xcassets
+      - path: PlatinFold/PrivacyInfo.xcprivacy
+    dependencies:
+      - package: Alamofire
+      - package: Firebase
+        product: FirebaseRemoteConfig
+      - package: Firebase
+        product: FirebaseAnalytics
+      - sdk: AdServices.framework
+    settings:
+      base:
+        TARGETED_DEVICE_FAMILY: "1"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        INFOPLIST_KEY_CFBundleDisplayName: Platin Fold
+        PRODUCT_BUNDLE_IDENTIFIER: com.indens.platinfold
+        PRODUCT_DISPLAY_NAME: Platin Fold
+        CODE_SIGN_ENTITLEMENTS: Config/PlatinFold.entitlements
+        DEVELOPMENT_TEAM: "S32MDUD8NR"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+        SUPPORTS_MACCATALYST: NO
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+  PlatinFoldUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: PlatinFoldUITests
+    dependencies:
+      - target: PlatinFold
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: ""
+        PRODUCT_BUNDLE_IDENTIFIER: com.indens.platinfold.uitests
+        PRODUCT_NAME: PlatinFoldUITests
+        PRODUCT_MODULE_NAME: PlatinFoldUITests
+        DEVELOPMENT_TEAM: "S32MDUD8NR"
+        TEST_TARGET_NAME: PlatinFold
+        CODE_SIGN_ENTITLEMENTS: ""
+  PlatinFoldTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PlatinFoldTests
+    dependencies:
+      - target: PlatinFold
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: ""
+        PRODUCT_BUNDLE_IDENTIFIER: com.indens.platinfold.tests
+        PRODUCT_NAME: PlatinFoldTests
+        PRODUCT_MODULE_NAME: PlatinFoldTests
+        DEVELOPMENT_TEAM: "S32MDUD8NR"
+        TEST_TARGET_NAME: PlatinFold
+        CODE_SIGN_ENTITLEMENTS: ""
+
+schemes:
+  PlatinFold:
+    build:
+      targets:
+        PlatinFold: all
+        PlatinFoldUITests: [test]
+    test:
+      targets:
+        - PlatinFoldUITests
+      commandLineArguments:
+        "UI-Testing": true
+  UnitTests:
+    build:
+      targets:
+        PlatinFold: all
+        PlatinFoldTests: [test]
+    test:
+      targets:
+        - PlatinFoldTests
