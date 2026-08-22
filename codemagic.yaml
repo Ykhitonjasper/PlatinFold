@@ -1,6 +1,5 @@
-# Copy to AppRoot/codemagic.yaml and fill XCODE_* / BUNDLE_ID.
-# Policy: build + sign IPA only. No ASC publishing of metadata/screenshots/submit.
-# Human uploads IPA (Transporter) and fills listing / keys in ASC by hand.
+# Build + sign IPA, then upload to App Store Connect.
+# Does not submit to TestFlight beta review or App Store review.
 
 workflows:
   app-store-release:
@@ -16,7 +15,6 @@ workflows:
         XCODE_PROJECT: PlatinFold.xcodeproj
         XCODE_SCHEME: PlatinFold
         BUNDLE_ID: com.indens.platinfold
-        # Must match project.yml after any rename (rename-brand.py should rewrite these).
 
     triggering:
       events:
@@ -85,5 +83,10 @@ workflows:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
 
-    # Do NOT add publishing.app_store_connect here.
-    # No submit_to_app_store / no auto screenshots / no version copy push.
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: false
+        submit_to_app_store: false
