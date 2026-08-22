@@ -30,18 +30,14 @@ struct ExportScreen: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        ScreenScaffold {
             ScreenHeader(
                 title: "Mix sheet",
                 subtitle: "Keep every mix for this sill — one page PDF."
             )
-            .padding(.horizontal, AppMetrics.screenPadding)
-            .padding(.top, AppMetrics.screenPadding)
-            .padding(.bottom, AppMetrics.tightSpacing)
 
-            Form {
-            Section {
-                HStack(spacing: AppMetrics.contentSpacing) {
+            SectionCard(title: "\(AppTheme.displayName) sheet", footnote: bench.note) {
+                HStack(alignment: .top, spacing: AppMetrics.contentSpacing) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(bench.name)
                             .font(.headline)
@@ -50,7 +46,9 @@ struct ExportScreen: View {
                             .font(.subheadline)
                             .foregroundStyle(AppTheme.textSecondary)
                     }
-                    Spacer()
+
+                    Spacer(minLength: 0)
+
                     VStack(alignment: .trailing, spacing: 4) {
                         Text("\(bench.potCount) pots")
                             .font(.subheadline.weight(.medium))
@@ -60,64 +58,63 @@ struct ExportScreen: View {
                             .foregroundStyle(AppTheme.textSecondary)
                     }
                 }
-            } header: {
-                Text("\(AppTheme.displayName) sheet")
-            } footer: {
-                Text(bench.note)
             }
 
-            Section {
+            SectionCard(title: "Bench") {
                 Picker("Bench", selection: $benchID) {
                     ForEach(benches) { item in
                         Text(item.name).tag(item.id)
                     }
                 }
+                .labelsHidden()
+                .tint(AppTheme.textMono)
             }
 
-            Section("Lines") {
+            SectionCard(title: "Lines") {
                 if lines.isEmpty {
                     Text("No saved mixes on this bench.")
+                        .font(.subheadline)
                         .foregroundStyle(AppTheme.textSecondary)
                 } else {
-                    ForEach(lines) { item in
-                        HStack {
-                            Text(item.tool.verb)
-                                .foregroundStyle(AppTheme.textPrimary)
-                            Spacer()
-                            Text(item.resultText)
-                                .font(.body.monospacedDigit())
-                                .foregroundStyle(AppTheme.textMono)
+                    VStack(spacing: AppMetrics.contentSpacing) {
+                        ForEach(lines) { item in
+                            DetailRow(label: item.tool.verb, value: item.resultText)
                         }
                     }
                 }
             }
 
-            Section {
-                Button {
-                    _ = BenchPDF.make(bench: bench, lines: lines)
-                    pdfReady = true
-                } label: {
-                    Label("Write PDF", systemImage: "doc.richtext")
-                }
-                Button {
-                    UIPasteboard.general.string = BenchPDF.textList(bench: bench, lines: lines)
-                    copied = true
-                } label: {
-                    Label("Copy text", systemImage: "doc.on.doc")
+            SectionCard(title: "Export") {
+                VStack(spacing: AppMetrics.contentSpacing) {
+                    CTAButton(
+                        title: "Write PDF",
+                        systemImage: "doc.richtext",
+                        hint: "Builds a one-page mix sheet for this bench"
+                    ) {
+                        _ = BenchPDF.make(bench: bench, lines: lines)
+                        pdfReady = true
+                    }
+
+                    CTAButton(
+                        title: "Copy text",
+                        systemImage: "doc.on.doc",
+                        emphasis: .secondary,
+                        hint: "Copies the mix list to the pasteboard"
+                    ) {
+                        UIPasteboard.general.string = BenchPDF.textList(bench: bench, lines: lines)
+                        copied = true
+                    }
                 }
             }
 
             if pdfReady {
-                Section("PDF ready") {
-                    LabeledContent("Page", value: "1")
-                    LabeledContent("Bench", value: bench.name)
-                    LabeledContent("Rows", value: "\(lines.count)")
+                SectionCard(title: "PDF ready") {
+                    DetailRow(label: "Page", value: "1")
+                    DetailRow(label: "Bench", value: bench.name, isProminent: true)
+                    DetailRow(label: "Rows", value: "\(lines.count)")
                 }
             }
-            }
-            .scrollContentBackground(.hidden)
         }
-        .background(AppBackground())
         .sensoryFeedback(.success, trigger: copied)
         .sensoryFeedback(.success, trigger: pdfReady)
         .onAppear {
