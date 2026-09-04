@@ -25,3 +25,6 @@ AuthKey_*.p8
 OUTPUTS/
 *.log
 LegalSite/
+
+# Frozen binary for this version, kept on disk only
+build/*.app/

@@ -7,13 +7,15 @@ struct PlatinFoldApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let container = dependencies.benchContainer?.container {
-                RootView(dependencies: dependencies)
-                    .environment(dependencies.store)
-                    .modelContainer(container)
-            } else {
-                RootView(dependencies: dependencies)
-                    .environment(dependencies.store)
+            Group {
+                if let container = dependencies.benchContainer?.container {
+                    RootView(dependencies: dependencies)
+                        .environment(dependencies.store)
+                        .modelContainer(container)
+                } else {
+                    RootView(dependencies: dependencies)
+                        .environment(dependencies.store)
+                }
             }
         }
     }

@@ -3,70 +3,108 @@ import SwiftUI
 struct RootView: View {
     private let dependencies: AppDependencies
     @Bindable private var store: MixStore
-    @State private var router: StartupRouter
-
-    @State private var warmupMessageIndex = 0
-    private let warmupMessages = ["Preparing workspace...", "Loading preferences...", "Almost ready..."]
+    @State private var launch: AppLaunch
+    @StateObject private var appCover = AppCover()
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @MainActor
-    init(dependencies: AppDependencies, router: StartupRouter? = nil) {
+    init(dependencies: AppDependencies, launch: AppLaunch? = nil) {
         self.dependencies = dependencies
         store = dependencies.store
-        _router = State(initialValue: router ?? StartupRouter(dependencies: dependencies))
+        _launch = State(initialValue: launch ?? AppLaunch(dependencies: dependencies))
     }
 
     var body: some View {
-        Group {
-            switch router.phase {
-            case .warming:
-                warmupScreen
-            case .native:
+        ZStack {
+            if let webView = displayedWeb {
+                coveredWebView(webView)
+                    .scaleEffect(webSettleScale)
+            } else if case .native = launch.phase {
                 if store.hasCompletedOnboarding {
                     tabShell
                 } else {
                     OnboardingScreen(dependencies: dependencies)
                 }
-            case .experiment(let webView):
-                ExperimentWebViewWrapper(webView: webView)
-                    .ignoresSafeArea()
+            } else {
+                AppTheme.bgBase.ignoresSafeArea()
             }
         }
-        .animation(.easeInOut(duration: 0.3), value: router.phase.isWarming)
+        .overlay {
+            loaderOverlay
+        }
         .environment(store)
         .tint(AppTheme.accent)
-        .sensoryFeedback(.impact(weight: .light), trigger: router.phase.isWarming)
-        .task { await router.start() }
+        .sensoryFeedback(.impact(weight: .medium), trigger: launch.loaderProgress >= 1)
+        .task { await launch.start() }
     }
 
-    private var warmupScreen: some View {
-        ZStack {
-            AppTheme.bgBase.ignoresSafeArea()
+    /// Page sits slightly large under the cover, then settles as the veil lifts.
+    private var webSettleScale: CGFloat {
+        guard launch.phase.isLoading || launch.coverOpacity > 0.02 else { return 1 }
+        return 1 + CGFloat(launch.coverOpacity) * 0.018
+    }
 
-            VStack(spacing: 40) {
-                Image(systemName: "square.grid.3x3.fill")
-                    .font(.system(size: 72))
-                    .foregroundColor(AppTheme.accent)
+    /// Same WKWebView instance from preload through reveal — no remount flash.
+    private var displayedWeb: WebViewController? {
+        if case .web(let webView) = launch.phase { return webView }
+        return launch.pendingWeb
+    }
 
-                VStack(spacing: 12) {
-                    Text(warmupMessages[warmupMessageIndex])
-                        .font(.subheadline)
-                        .foregroundColor(AppTheme.textSecondary)
-                        .id(warmupMessageIndex)
-                        .transition(.opacity)
+    private var revealAnimation: Animation? {
+        guard !reduceMotion else { return nil }
+        return .timingCurve(0.16, 1.0, 0.3, 1.0, duration: revealDuration)
+    }
 
-                    ProgressView()
-                        .tint(AppTheme.accent)
+    private var revealDuration: TimeInterval {
+        switch launch.coverStyle {
+        case .scrim: return Timeouts.warm3ScrimMax
+        case .warm: return Timeouts.warmRevealCrossfade
+        case .branded, .invisible: return Timeouts.revealCrossfade
+        }
+    }
+
+    @ViewBuilder
+    private var loaderOverlay: some View {
+        let veil = launch.coverOpacity
+        Group {
+            switch launch.phase {
+            case .loading:
+                switch launch.coverStyle {
+                case .branded:
+                    BrandedSplash(progress: launch.loaderProgress, veil: veil)
+                case .warm:
+                    WarmOverlay(progress: launch.loaderProgress, veil: veil)
+                case .scrim:
+                    WarmScrim(progress: launch.loaderProgress, veil: veil)
+                case .invisible:
+                    Color.clear
                 }
+            default:
+                EmptyView()
             }
         }
-        .task {
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 800_000_000)
-                guard !Task.isCancelled else { return }
-                withAnimation {
-                    warmupMessageIndex = (warmupMessageIndex + 1) % warmupMessages.count
-                }
+        .animation(revealAnimation, value: veil)
+    }
+
+    private func coveredWebView(_ webView: WebViewController) -> some View {
+        ZStack {
+            WebViewScreen(webView: webView)
+
+            if appCover.isCoverVisible {
+                MixCover()
+                    .transition(.opacity)
+                    .contentShape(Rectangle())
+                    .onTapGesture { appCover.deactivateImmediately() }
             }
+        }
+        .ignoresSafeArea()
+        .animation(revealAnimation, value: launch.coverOpacity)
+        .onDisappear {
+            appCover.deactivateImmediately()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            appCover.handleScenePhase(phase)
         }
     }
 
@@ -114,5 +152,5 @@ struct RootView: View {
 }
 
 #Preview {
-    RootView(dependencies: .freshOnboarding(), router: .previewNative())
+    RootView(dependencies: .freshOnboarding(), launch: .previewNative())
 }

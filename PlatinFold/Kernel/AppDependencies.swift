@@ -27,19 +27,19 @@ struct AppDependencies {
     let store: MixStore
     let benchContainer: BenchContainer?
     
-    let analyticsCoordinator: AnalyticsCoordinating
-    let analyticsSession: AnalyticsSessionProviding
+    let appClient: AppClientType
+    let appSession: AppSessionType
 
     init(projects: any ProjectStoring, 
          store: MixStore, 
          benchContainer: BenchContainer?,
-         analyticsCoordinator: AnalyticsCoordinating = AnalyticsCoordinator.shared,
-         analyticsSession: AnalyticsSessionProviding = AnalyticsSession.shared) {
+         appClient: AppClientType? = nil,
+         appSession: AppSessionType = AppSession.shared) {
         self.projects = projects
         self.store = store
         self.benchContainer = benchContainer
-        self.analyticsCoordinator = analyticsCoordinator
-        self.analyticsSession = analyticsSession
+        self.appSession = appSession
+        self.appClient = appClient ?? AppClient(session: appSession)
     }
 
     static func preview() -> AppDependencies {
